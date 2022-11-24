@@ -30,6 +30,8 @@ def play_jingle():
         i = i + AUDIO_PERIOD_SIZE
     print("play_jingle stop")
 
+    return not (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes))
+
 
 def record():
     print("record start")
@@ -43,8 +45,10 @@ def signal_handler(sig, frame):
 
 def gpio_evt_callback(channel):
     print("gpio_evt_callback!")
-    play_jingle()
-    record()
+    ret = play_jingle()
+
+    if ret:
+        record()
 
 
 if __name__ == '__main__':
