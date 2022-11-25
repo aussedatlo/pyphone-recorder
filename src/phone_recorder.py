@@ -24,8 +24,8 @@ class PhoneRecorder:
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-        GPIO.add_event_detect(self.gpio, GPIO.BOTH,
-                              callback=self.gpio_evt_callback, bouncetime=100)
+        GPIO.add_event_detect(self.gpio, GPIO.FALLING,
+                              callback=self.gpio_evt_callback, bouncetime=500)
 
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.pause()
