@@ -3,6 +3,7 @@ import sys
 import RPi.GPIO as GPIO
 import alsaaudio as audio
 import wave
+from yaspin import yaspin
 
 AUDIO_FRAMERATE = 44100
 AUDIO_FORMAT = audio.PCM_FORMAT_S16_LE
@@ -32,27 +33,35 @@ class PhoneRecorder:
 
     def play_jingle(self):
         """play jingle, stop if gpio status change"""
-        print("play_jingle start")
-        f = wave.open(self.jingle)
-        message_bip_bytes = f.readframes(f.getnframes())
+        with yaspin(text="Playing jingle", color="cyan") as sp:
+            f = wave.open(self.jingle)
+            message_bip_bytes = f.readframes(f.getnframes())
 
-        out = audio.PCM(
-            audio.PCM_PLAYBACK, device=self.audio_output_device, channels=2,
-            rate=AUDIO_FRAMERATE, format=AUDIO_FORMAT,
-            periodsize=AUDIO_PERIOD_SIZE)
+            out = audio.PCM(
+                audio.PCM_PLAYBACK, device=self.audio_output_device, channels=2,
+                rate=AUDIO_FRAMERATE, format=AUDIO_FORMAT,
+                periodsize=AUDIO_PERIOD_SIZE)
 
-        i = 0
-        while (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes)) and (not GPIO.input(self.gpio)):
-            out.write(message_bip_bytes[i:i + AUDIO_PERIOD_SIZE])
-            i = i + AUDIO_PERIOD_SIZE
-        print("play_jingle stop")
+            i = 0
+            while (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes)) and (not GPIO.input(self.gpio)):
+                out.write(message_bip_bytes[i:i + AUDIO_PERIOD_SIZE])
+                i = i + AUDIO_PERIOD_SIZE
 
-        return not (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes))
+            finished = not (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes))
+            if (finished):
+                sp.write("> done")
+                sp.ok("✔")
+            else:
+                sp.write("> cancelled")
+                sp.ok("✕")
+
+            return finished
 
     def record(self):
         """record audio, stop if gpio status change"""
-        print("record start")
-        print("record stop")
+        with yaspin(text="Recording", color="cyan") as sp:
+            sp.write("> done")
+            sp.ok("✔")
 
     def signal_handler(self, sig, frame):
         """cleanup gpio state on signal"""
@@ -61,7 +70,6 @@ class PhoneRecorder:
 
     def gpio_evt_callback(self, channel):
         """callback used when gpio state change"""
-        print("gpio_evt_callback!")
         ret = self.play_jingle()
 
         if ret:
