@@ -5,6 +5,7 @@ import alsaaudio as audio
 import wave
 from yaspin import yaspin
 import pyaudio
+import time
 
 AUDIO_FRAMERATE = 44100
 AUDIO_FORMAT = audio.PCM_FORMAT_S16_LE
@@ -79,7 +80,7 @@ class PhoneRecorder:
             inp.stop_stream()
             inp.close()
 
-            f = wave.open("testrecord.wav", 'wb')
+            f = wave.open('record-{}.wav'.format(time.time()), 'wb')
             f.setnchannels(1)
             f.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
             f.setframerate(AUDIO_FRAMERATE)
