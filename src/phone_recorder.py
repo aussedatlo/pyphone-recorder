@@ -4,10 +4,12 @@ import RPi.GPIO as GPIO
 import alsaaudio as audio
 import wave
 from yaspin import yaspin
+import pyaudio
 
 AUDIO_FRAMERATE = 44100
 AUDIO_FORMAT = audio.PCM_FORMAT_S16_LE
 AUDIO_PERIOD_SIZE = 160
+RECORD_SECONDS = 120
 
 
 class PhoneRecorder:
@@ -19,6 +21,8 @@ class PhoneRecorder:
         self.audio_input_device = audio_input_device
         self.jingle = jingle
         self.gpio = gpio
+
+        self.audio = pyaudio.PyAudio()
 
     def run(self):
         """start the process and listen to event on gpio"""
@@ -60,6 +64,27 @@ class PhoneRecorder:
     def record(self):
         """record audio, stop if gpio status change"""
         with yaspin(text="Recording", color="cyan") as sp:
+            inp = self.audio.open(
+                format=pyaudio.paInt16, channels=1, rate=AUDIO_FRAMERATE,
+                input=True, frames_per_buffer=AUDIO_PERIOD_SIZE)
+
+            frames = []
+            for i in range(
+                    0, int(AUDIO_FRAMERATE / AUDIO_PERIOD_SIZE * RECORD_SECONDS)):
+                if (not GPIO.input(self.gpio)):
+                    break
+                data = inp.read(AUDIO_PERIOD_SIZE)
+                frames.append(data)
+
+            inp.stop_stream()
+            inp.close()
+
+            f = wave.open("testrecord.wav", 'wb')
+            f.setnchannels(1)
+            f.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
+            f.setframerate(AUDIO_FRAMERATE)
+            f.writeframes(b''.join(frames))
+            f.close()
             sp.write("> done")
             sp.ok("✔")
 
