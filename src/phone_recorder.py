@@ -14,12 +14,9 @@ RECORD_SECONDS = 120
 
 
 class PhoneRecorder:
-    def __init__(self,
-                 audio_output_device, audio_input_device,
-                 jingle, gpio):
+    def __init__(self, audio_output_device, jingle, gpio):
         """constructor"""
         self.audio_output_device = audio_output_device
-        self.audio_input_device = audio_input_device
         self.jingle = jingle
         self.gpio = gpio
 
