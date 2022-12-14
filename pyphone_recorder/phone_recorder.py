@@ -10,11 +10,11 @@ import time
 AUDIO_FRAMERATE = 44100
 AUDIO_FORMAT = audio.PCM_FORMAT_S16_LE
 AUDIO_PERIOD_SIZE = 160
-RECORD_SECONDS = 120
+RECORD_SECONDS = 300
 
 
 class PhoneRecorder:
-    def __init__(self, audio_output_device, jingle1, jingle2, gpio):
+    def __init__(self, audio_output_device, jingle1, jingle2, gpio, output_path):
         """constructor"""
         self.audio_output_device = audio_output_device
         self.jingle1 = jingle1
@@ -22,6 +22,7 @@ class PhoneRecorder:
         self.gpio = gpio
 
         self.audio = pyaudio.PyAudio()
+        self.output_path = output_path
 
     def run(self):
         """start the process and listen to event on gpio"""
@@ -36,7 +37,7 @@ class PhoneRecorder:
 
     def play_jingle(self, jingle):
         """play jingle, stop if gpio status change"""
-        with yaspin(text="Playing jingle", color="cyan") as sp:
+        with yaspin(text="Playing jingle " + jingle , color="cyan") as sp:
             f = wave.open(jingle)
             message_bip_bytes = f.readframes(f.getnframes())
 
@@ -46,11 +47,11 @@ class PhoneRecorder:
                 periodsize=AUDIO_PERIOD_SIZE)
 
             i = 0
-            while (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes)) and (not GPIO.input(self.gpio)):
+            while (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes)) and (GPIO.input(self.gpio)):
                 out.write(message_bip_bytes[i:i + AUDIO_PERIOD_SIZE])
                 i = i + AUDIO_PERIOD_SIZE
 
-            finished = not (i + AUDIO_PERIOD_SIZE < len(message_bip_bytes))
+            finished = i + AUDIO_PERIOD_SIZE >= len(message_bip_bytes)
             if (finished):
                 sp.write("> done")
                 sp.ok("✔")
@@ -63,36 +64,36 @@ class PhoneRecorder:
     def record(self):
         """record audio, stop if gpio status change"""
         with yaspin(text="Recording", color="cyan") as sp:
-            ret = True
             inp = self.audio.open(
                 format=pyaudio.paInt16, channels=1, rate=AUDIO_FRAMERATE,
                 input=True, frames_per_buffer=AUDIO_PERIOD_SIZE)
 
             frames = []
-            for i in range(
-                    0, int(AUDIO_FRAMERATE / AUDIO_PERIOD_SIZE * RECORD_SECONDS)):
-                if (not GPIO.input(self.gpio)):
-                    ret = False
-                    break
+            i = 0
+            while ((i < AUDIO_FRAMERATE * RECORD_SECONDS) and GPIO.input(self.gpio)):
+                i = i + AUDIO_PERIOD_SIZE
                 data = inp.read(AUDIO_PERIOD_SIZE)
                 frames.append(data)
 
             inp.stop_stream()
             inp.close()
 
-            f = wave.open('record-{}.wav'.format(time.time()), 'wb')
+            f = wave.open(self.output_path + '/record-{}.wav'.format(time.time()), 'wb')
             f.setnchannels(1)
             f.setsampwidth(self.audio.get_sample_size(pyaudio.paInt16))
             f.setframerate(AUDIO_FRAMERATE)
             f.writeframes(b''.join(frames))
             f.close()
+
             sp.write("> done")
             sp.ok("✔")
-            return ret
+
+            return i >= int(AUDIO_FRAMERATE / AUDIO_PERIOD_SIZE * RECORD_SECONDS)
 
     def signal_handler(self, sig, frame):
         """cleanup gpio state on signal"""
         GPIO.cleanup()
+        self.audio.terminate()
         sys.exit(0)
 
     def gpio_evt_callback(self, channel):
