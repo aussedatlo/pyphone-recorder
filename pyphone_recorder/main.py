@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import click
-from phone_recorder import PhoneRecorder as PR
+from pyphone_recorder import phone_recorder as PR
 
 BUTTON_GPIO = 3
 
@@ -18,8 +18,8 @@ AUDIO_OUTPUT_DEVICE = "hw:0,0"
 def run(
         audio_output_device,
         jingle, gpio):
-    pr = PR(audio_output_device,
-            jingle, gpio)
+    pr = PR.PhoneRecorder(audio_output_device,
+                          jingle, gpio)
     # pr.run()
     pr.record()
 
