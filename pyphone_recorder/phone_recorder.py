@@ -14,10 +14,11 @@ RECORD_SECONDS = 120
 
 
 class PhoneRecorder:
-    def __init__(self, audio_output_device, jingle, gpio):
+    def __init__(self, audio_output_device, jingle1, jingle2, gpio):
         """constructor"""
         self.audio_output_device = audio_output_device
-        self.jingle = jingle
+        self.jingle1 = jingle1
+        self.jingle2 = jingle2
         self.gpio = gpio
 
         self.audio = pyaudio.PyAudio()
@@ -33,10 +34,10 @@ class PhoneRecorder:
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.pause()
 
-    def play_jingle(self):
+    def play_jingle(self, jingle):
         """play jingle, stop if gpio status change"""
         with yaspin(text="Playing jingle", color="cyan") as sp:
-            f = wave.open(self.jingle)
+            f = wave.open(jingle)
             message_bip_bytes = f.readframes(f.getnframes())
 
             out = audio.PCM(
@@ -62,6 +63,7 @@ class PhoneRecorder:
     def record(self):
         """record audio, stop if gpio status change"""
         with yaspin(text="Recording", color="cyan") as sp:
+            ret = True
             inp = self.audio.open(
                 format=pyaudio.paInt16, channels=1, rate=AUDIO_FRAMERATE,
                 input=True, frames_per_buffer=AUDIO_PERIOD_SIZE)
@@ -70,6 +72,7 @@ class PhoneRecorder:
             for i in range(
                     0, int(AUDIO_FRAMERATE / AUDIO_PERIOD_SIZE * RECORD_SECONDS)):
                 if (not GPIO.input(self.gpio)):
+                    ret = False
                     break
                 data = inp.read(AUDIO_PERIOD_SIZE)
                 frames.append(data)
@@ -85,6 +88,7 @@ class PhoneRecorder:
             f.close()
             sp.write("> done")
             sp.ok("✔")
+            return ret
 
     def signal_handler(self, sig, frame):
         """cleanup gpio state on signal"""
@@ -93,7 +97,10 @@ class PhoneRecorder:
 
     def gpio_evt_callback(self, channel):
         """callback used when gpio state change"""
-        ret = self.play_jingle()
+        ret = self.play_jingle(self.jingle1)
 
         if ret:
-            self.record()
+            ret = self.record()
+
+        if ret:
+            self.play_jingle(self.jingle2)
