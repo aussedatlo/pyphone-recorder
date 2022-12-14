@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import click
 from phone_recorder import PhoneRecorder as PR
 
@@ -19,8 +20,13 @@ def run(
         jingle, gpio):
     pr = PR(audio_output_device,
             jingle, gpio)
-    pr.run()
+    # pr.run()
+    pr.record()
 
 
-if __name__ == '__main__':
-    run()
+def exec_command_line(argv):
+    run(argv)
+
+
+if __name__ == "__main__":
+    run(sys.argv)

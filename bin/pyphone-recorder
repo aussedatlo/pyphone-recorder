@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+__author__ = "Louis Aussedat"
+__copyright__ = "Copyright (c) 2022 Louis Aussedat"
+__license__ = "GPLv3"
+
+from pyphone_recorder import main
+import sys
+
+if __name__ == "__main__":
+    main.exec_command_line(sys.argv)
