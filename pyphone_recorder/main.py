@@ -5,7 +5,7 @@ from pyphone_recorder import phone_recorder as PR
 
 BUTTON_GPIO = 3
 
-AUDIO_OUTPUT_DEVICE = "hw:0,0"
+AUDIO_OUTPUT_DEVICE = "hw:4,0"
 
 
 @click.command()
