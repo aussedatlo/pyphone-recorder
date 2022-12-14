@@ -22,9 +22,5 @@ def run(
     pr.run()
 
 
-def exec_command_line(argv):
-    run(argv)
-
-
 if __name__ == "__main__":
     run(sys.argv)
