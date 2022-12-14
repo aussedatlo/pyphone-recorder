@@ -1,6 +1,6 @@
 import signal
 import sys
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 import alsaaudio as audio
 import wave
 from yaspin import yaspin
@@ -24,11 +24,11 @@ class PhoneRecorder:
 
     def run(self):
         """start the process and listen to event on gpio"""
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        # GPIO.setmode(GPIO.BOARD)
+        # GPIO.setup(self.gpio, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-        GPIO.add_event_detect(self.gpio, GPIO.FALLING,
-                              callback=self.gpio_evt_callback, bouncetime=500)
+        # GPIO.add_event_detect(self.gpio, GPIO.FALLING,
+        #                       callback=self.gpio_evt_callback, bouncetime=500)
 
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.pause()
@@ -69,8 +69,8 @@ class PhoneRecorder:
             frames = []
             for i in range(
                     0, int(AUDIO_FRAMERATE / AUDIO_PERIOD_SIZE * RECORD_SECONDS)):
-                if (not GPIO.input(self.gpio)):
-                    break
+                # if (not GPIO.input(self.gpio)):
+                #     break
                 data = inp.read(AUDIO_PERIOD_SIZE)
                 frames.append(data)
 
