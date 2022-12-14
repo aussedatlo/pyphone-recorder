@@ -1,6 +1,6 @@
 import signal
 import sys
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import alsaaudio as audio
 import wave
 from yaspin import yaspin
