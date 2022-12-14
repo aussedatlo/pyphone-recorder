@@ -20,8 +20,7 @@ def run(
         jingle, gpio):
     pr = PR.PhoneRecorder(audio_output_device,
                           jingle, gpio)
-    # pr.run()
-    pr.record()
+    pr.run()
 
 
 def exec_command_line(argv):
